@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Dataverse plug-in assemblies must target .NET Framework (see docs/decisions.md). -->
+    <TargetFramework>net462</TargetFramework>
+    <AssemblyName>AmlGuard.Plugins</AssemblyName>
+    <RootNamespace>AmlGuard.Plugins</RootNamespace>
+    <Description>Anti-fraud and AML compliance plug-ins for Dynamics 365 / Dataverse (educational project, fictional data).</Description>
+
+    <!-- A stand-alone plug-in assembly must be strong-name signed before registration. -->
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>AmlGuard.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Reference only: the sandbox already provides these assemblies at run time. -->
+    <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.60" />
+  </ItemGroup>
+
+</Project>
