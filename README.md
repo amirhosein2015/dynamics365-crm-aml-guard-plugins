@@ -1,4 +1,4 @@
-# Dynamics 365 CRM – AML Guard Plugins
+# AML Guard for Dynamics 365 CRM – Anti-Fraud Plugins
 
 Anti-fraud and AML (anti-money-laundering) compliance plugins for Microsoft Dynamics 365 CRM / Dataverse, written in C#.
 
