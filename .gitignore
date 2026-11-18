@@ -1,0 +1,43 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+*.dll.config
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.rsuser
+launchSettings.json
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# Test results and coverage
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+
+# Secrets and signing keys (never commit private keys or credentials)
+*.pfx
+*.p12
+appsettings.Development.json
+appsettings.Local.json
+*.secrets.json
+
+# OS / editor
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
