@@ -37,7 +37,7 @@ namespace AmlGuard.Plugins.Domain
             }
 
             var windowEnd = newDeposit.DateUtc;
-            var windowStart = windowEnd - TimeSpan.FromHours(_rules.WindowHours);
+            var windowStart = _rules.WindowStartFor(windowEnd);
 
             if (!Qualifies(newDeposit))
             {

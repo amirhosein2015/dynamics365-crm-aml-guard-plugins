@@ -280,6 +280,42 @@ namespace AmlGuard.Tests
         }
 
         [Fact]
+        public void FromSettings_UsesStoredValues()
+        {
+            var rules = DepositRules.FromSettings(5000m, 4, 12);
+
+            Assert.Equal(5000m, rules.ReportingThreshold);
+            Assert.Equal(4, rules.MinDepositCount);
+            Assert.Equal(12, rules.WindowHours);
+        }
+
+        [Fact]
+        public void FromSettings_FallsBackToDefaultsForMissingValues()
+        {
+            var rules = DepositRules.FromSettings(null, null, 6);
+
+            Assert.Equal(SettingsDefaults.ReportingThreshold, rules.ReportingThreshold);
+            Assert.Equal(SettingsDefaults.MinDepositCount, rules.MinDepositCount);
+            Assert.Equal(6, rules.WindowHours);
+        }
+
+        [Fact]
+        public void FromSettings_RejectsInvalidStoredValues()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => DepositRules.FromSettings(0m, 3, 24));
+            Assert.Throws<ArgumentOutOfRangeException>(() => DepositRules.FromSettings(10000m, 3, 0));
+        }
+
+        [Fact]
+        public void WindowStartFor_GoesBackByTheConfiguredHours()
+        {
+            var rules = new DepositRules(10000m, 3, 24);
+            var end = new DateTime(2026, 3, 10, 12, 0, 0, DateTimeKind.Utc);
+
+            Assert.Equal(end.AddHours(-24), rules.WindowStartFor(end));
+        }
+
+        [Fact]
         public void ThresholdMustBePositive()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => new DepositRules(0m, 3, 24));

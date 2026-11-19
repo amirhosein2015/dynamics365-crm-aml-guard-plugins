@@ -45,5 +45,21 @@ namespace AmlGuard.Plugins.Domain
                 SettingsDefaults.MinDepositCount,
                 SettingsDefaults.WindowHours);
         }
+
+        // Builds the rules from stored values; a value that is not set falls back to its default.
+        // A value that is set but invalid (for example 0) throws, so the caller decides what to do.
+        public static DepositRules FromSettings(decimal? reportingThreshold, int? minDepositCount, int? windowHours)
+        {
+            return new DepositRules(
+                reportingThreshold ?? SettingsDefaults.ReportingThreshold,
+                minDepositCount ?? SettingsDefaults.MinDepositCount,
+                windowHours ?? SettingsDefaults.WindowHours);
+        }
+
+        // The single place that defines the window, so queries and the rule always agree on it.
+        public DateTime WindowStartFor(DateTime newDepositUtc)
+        {
+            return newDepositUtc - TimeSpan.FromHours(WindowHours);
+        }
     }
 }

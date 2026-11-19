@@ -62,3 +62,44 @@ character in a name must not be able to do that.
 
 `ArchitectureTests` fails if a `Domain` type declares, stores or holds a local of a Dataverse SDK
 type. It cannot see an SDK type that is only used inside a method call, so code review still matters.
+
+## D10. Three layers: plug-in, handler, repository
+
+`SplitDepositPlugin` only unpacks the execution context. `SplitDepositHandler` reads the inputs and writes
+the alert. `AmlRepository` holds every query. The decision itself lives in `SplitDepositEvaluator`
+(Domain). Each layer has one reason to change, and only the Domain layer needs unit tests without any
+Dataverse. The handler and plug-in are covered by integration tests on an in-memory Dataverse.
+
+## D11. The plug-in runs its queries as the SYSTEM user
+
+The plug-in calls `CreateOrganizationService(null)`. Microsoft documents `null` as "run as SYSTEM", while
+`context.UserId` runs as the user who triggered the plug-in. A structuring check has to see every deposit
+of the customer, even those made by tellers in other business units, and the alert has to be saved no matter
+who made the deposit. A normal user's read scope could hide deposits and silently weaken the rule.
+Trade-off: the alert is created by SYSTEM, so `createdby` does not show the teller; the transaction
+itself still does.
+
+## D12. Fail closed for the split-deposit check
+
+If the check cannot run (for example a query fails), the plug-in traces the error and throws an
+`InvalidPluginExecutionException`, so the deposit is not saved unchecked. This is the opposite of D8 on
+purpose: bad data in a name must not block a save, but a broken compliance control should not be
+silently skipped. If the business prefers availability over control, the catch block is the one place to change.
+
+## D13. Bad configuration falls back to defaults
+
+If `aml_settings` has no row, or a value is missing or invalid (for example a threshold of 0), the handler
+traces a message and uses the documented defaults. A typo in a settings row must not stop all deposits.
+Trade-off: a wrong setting can go unnoticed, which is why the trace line names the bad value.
+
+## D14. Duplicate alerts: any alert of the same type in the window counts, open or closed
+
+An analyst closing an alert should not make the next deposit raise a second alert for the same pattern.
+The check uses `createdon`, which Dataverse always sets. An alert without it is treated as current
+(skip one alert rather than create a duplicate).
+
+## D15. Integration tests start the plug-in with `ExecutePluginWithTarget`
+
+The new deposit is saved to the in-memory Dataverse first and then passed as `Target`, like PostOperation.
+This avoids depending on step registration and automatic pipeline triggering of the test library, which
+is a small young project. Registering the step in the portal is covered by `docs/registration.md`.

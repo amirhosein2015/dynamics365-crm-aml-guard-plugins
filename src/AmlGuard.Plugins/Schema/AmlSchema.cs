@@ -3,6 +3,12 @@ namespace AmlGuard.Plugins.Schema
     // Logical names and choice values of the Dataverse data model (see docs/data-model.md).
     // Kept in one place so a rename in the portal is a one-file change, not a search-and-replace.
 
+    // Columns that Dataverse maintains on every table.
+    public static class SystemFields
+    {
+        public const string CreatedOn = "createdon";
+    }
+
     public static class ContactFields
     {
         public const string LogicalName = "contact";
