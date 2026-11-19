@@ -103,3 +103,38 @@ The check uses `createdon`, which Dataverse always sets. An alert without it is 
 The new deposit is saved to the in-memory Dataverse first and then passed as `Target`, like PostOperation.
 This avoids depending on step registration and automatic pipeline triggering of the test library, which
 is a small young project. Registering the step in the portal is covered by `docs/registration.md`.
+
+## D16. Sanctions match: flag and alert, never throw
+
+On a match the plug-in sets `aml_reviewstatus = Under Review` and creates a Critical alert. It does not
+throw: an `InvalidPluginExecutionException` in a synchronous step rolls back the whole transaction, which
+would also undo the alert that documents the match. The contact is saved and a human reviews it.
+Only a failure of the check itself throws (fail closed, same reasoning as D12).
+
+## D17. Three layers against infinite loops
+
+The plug-in updates the contact itself, which could re-trigger it. (1) The Update step is registered with
+filtering attributes `firstname` and `lastname`, and the plug-in only writes `aml_reviewstatus`.
+(2) In code, an Update whose Target has no name column is skipped, which is a test case of its own, in case
+someone registers the step without filtering. (3) `ExecutionDepthGuard` stops chains deeper than 2.
+Depth 1 is the user and depth 2 is automation started by that save, so both are still screened; a deeper
+chain is almost certainly a loop. Dataverse itself stops at depth 8.
+
+## D18. Retrieve the contact instead of using a pre-image
+
+On Update the Target holds only changed columns, so one name part may be missing. A pre/post image would
+fix that but needs extra registration in the Plugin Registration Tool, which is easy to forget. One
+`Retrieve` in PostOperation returns the saved name and keeps the registration to two simple steps.
+Trade-off: one extra read per screened save.
+
+## D19. A cleared review flag is never reset by the plug-in
+
+If a name is edited to something that no longer matches, `aml_reviewstatus` stays as it is. Clearing a
+compliance flag is a decision for an analyst, not for a plug-in; an automatic reset would let someone
+launder a flag by editing and re-editing a name.
+
+## D20. One open alert per contact; the trace log holds ids, not names
+
+Saving the name again while an open sanctions alert exists does not create another one. Once the alert is
+closed, a new screening can raise a new alert. Names are personal data, so the trace log records contact ids
+only and the alert text carries the names, protected by the alert table's own security.

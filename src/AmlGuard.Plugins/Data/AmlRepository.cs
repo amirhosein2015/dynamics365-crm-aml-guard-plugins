@@ -102,6 +102,81 @@ namespace AmlGuard.Plugins.Data
             return AttributeReader.GetUtcDate(row, SystemFields.CreatedOn) ?? DateTime.MaxValue;
         }
 
+        // Reads the current name instead of relying on the Target: on Update the Target holds only the
+        // changed columns, so one of the two name parts may be missing from it.
+        public ContactSnapshot GetContact(Guid contactId)
+        {
+            var row = _service.Retrieve(
+                ContactFields.LogicalName,
+                contactId,
+                new ColumnSet(ContactFields.FirstName, ContactFields.LastName, ContactFields.ReviewStatus));
+
+            return new ContactSnapshot
+            {
+                FirstName = row.GetAttributeValue<string>(ContactFields.FirstName),
+                LastName = row.GetAttributeValue<string>(ContactFields.LastName),
+                ReviewStatus = AttributeReader.GetInt(row, ContactFields.ReviewStatus)
+            };
+        }
+
+        private const int SanctionedNamePageSize = 5000;
+
+        // Loads the whole sanctions list, page by page. Matching ignores case and diacritics, which a
+        // database filter cannot express, so the comparison happens in memory (see the README limitations).
+        public IList<string> GetSanctionedNames()
+        {
+            var names = new List<string>();
+            var query = new QueryExpression(SanctionedNameFields.LogicalName)
+            {
+                ColumnSet = new ColumnSet(SanctionedNameFields.Name),
+                PageInfo = new PagingInfo { Count = SanctionedNamePageSize, PageNumber = 1 }
+            };
+
+            while (true)
+            {
+                var page = _service.RetrieveMultiple(query);
+                foreach (var row in page.Entities)
+                {
+                    var name = row.GetAttributeValue<string>(SanctionedNameFields.Name);
+                    if (!string.IsNullOrWhiteSpace(name))
+                    {
+                        names.Add(name);
+                    }
+                }
+
+                if (!page.MoreRecords)
+                {
+                    return names;
+                }
+
+                query.PageInfo.PageNumber++;
+                query.PageInfo.PagingCookie = page.PagingCookie;
+            }
+        }
+
+        public bool HasOpenAlert(Guid customerId, AlertType alertType)
+        {
+            var query = new QueryExpression(AlertFields.LogicalName)
+            {
+                ColumnSet = new ColumnSet(false),
+                TopCount = 1
+            };
+            query.Criteria.AddCondition(AlertFields.Customer, ConditionOperator.Equal, customerId);
+            query.Criteria.AddCondition(AlertFields.Type, ConditionOperator.Equal, (int)alertType);
+            query.Criteria.AddCondition(AlertFields.Status, ConditionOperator.Equal, (int)AlertStatus.Open);
+
+            return _service.RetrieveMultiple(query).Entities.Any();
+        }
+
+        // Writes only aml_reviewstatus. That column is not a filtering attribute of the sanctions
+        // step, so this update cannot trigger the plug-in again.
+        public void SetReviewStatus(Guid contactId, ReviewStatus status)
+        {
+            var update = new Entity(ContactFields.LogicalName, contactId);
+            update[ContactFields.ReviewStatus] = new OptionSetValue((int)status);
+            _service.Update(update);
+        }
+
         public Guid CreateAlert(
             Guid customerId,
             AlertType type,

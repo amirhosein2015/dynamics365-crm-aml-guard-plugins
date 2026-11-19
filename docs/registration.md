@@ -15,6 +15,21 @@ Only needed if you have a Dataverse environment. The automated tests do not need
 | Execution mode | Synchronous |
 | Run in user's context | Calling User (the plug-in itself switches to SYSTEM for its queries, see D11) |
 
+## Sanctions check plug-in
+
+Register the same plug-in type twice (two steps), both on table `contact`:
+
+| Setting | Step 1 | Step 2 |
+|---|---|---|
+| Plug-in type | `AmlGuard.Plugins.SanctionsCheckPlugin` | `AmlGuard.Plugins.SanctionsCheckPlugin` |
+| Message | Create | Update |
+| Filtering attributes | not applicable | `firstname`, `lastname` (only these two) |
+| Event pipeline stage | PostOperation (40) | PostOperation (40) |
+| Execution mode | Synchronous | Synchronous |
+
+The filtering attributes on step 2 matter: the plug-in updates `aml_reviewstatus` itself, and without the
+filter that update would call the plug-in again (see D17 for the extra safeguards in code).
+
 ## Reading the Plugin Trace Log
 
 1. Power Platform admin center, select the environment, Settings, Plug-in trace log: set it to **All**

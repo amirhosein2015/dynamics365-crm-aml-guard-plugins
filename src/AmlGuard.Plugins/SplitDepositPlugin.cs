@@ -27,7 +27,8 @@ namespace AmlGuard.Plugins
             }
 
             var target = (Entity)context.InputParameters["Target"];
-            var transactionId = ResolveCreatedId(context, target);
+            // The id lets the rule avoid counting the new deposit twice, so it must be known.
+            var transactionId = PluginContextHelper.ResolveCreatedId(context, target);
             tracing.Trace("SplitDepositPlugin started. Transaction {0}, depth {1}.", transactionId, context.Depth);
 
             try
@@ -50,26 +51,7 @@ namespace AmlGuard.Plugins
         {
             return string.Equals(context.MessageName, "Create", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(context.PrimaryEntityName, TransactionFields.LogicalName, StringComparison.Ordinal)
-                && context.InputParameters.Contains("Target")
-                && context.InputParameters["Target"] is Entity;
-        }
-
-        // In PostOperation the record exists and its id is known. The id lets the rule avoid counting the
-        // new deposit twice, so a missing id is an error rather than something to guess around.
-        private static Guid ResolveCreatedId(IPluginExecutionContext context, Entity target)
-        {
-            if (target.Id != Guid.Empty)
-            {
-                return target.Id;
-            }
-
-            if (context.OutputParameters.Contains("id") && context.OutputParameters["id"] is Guid)
-            {
-                return (Guid)context.OutputParameters["id"];
-            }
-
-            throw new InvalidPluginExecutionException(
-                "The created transaction has no id. Register the step as PostOperation (stage 40).");
+                && PluginContextHelper.HasEntityTarget(context);
         }
     }
 }
