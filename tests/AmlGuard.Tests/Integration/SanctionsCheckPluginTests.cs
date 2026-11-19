@@ -292,15 +292,18 @@ namespace AmlGuard.Tests.Integration
         // ---- Context guards ----
 
         [Fact]
-        public void CallForAnotherMessage_IsIgnored()
+        public void CallForAnotherTable_IsIgnored()
         {
+            // The plug-in is registered on contact only; a Create on another table must do nothing.
             var contact = Contact("Ivan", "Petrov");
-            Seed(contact, Sanctioned("Ivan Petrov"));
+            var otherRecord = new Entity(TransactionFields.LogicalName, Guid.NewGuid());
+            Seed(contact, otherRecord, Sanctioned("Ivan Petrov"));
 
             _context.ExecutePluginWithTarget<SanctionsCheckPlugin>(
-                contact, messageName: "Delete", stage: PostOperationStage);
+                otherRecord, messageName: "Create", stage: PostOperationStage);
 
             Assert.Empty(Alerts());
+            Assert.Null(ReviewStatusOf(contact));
         }
     }
 }
