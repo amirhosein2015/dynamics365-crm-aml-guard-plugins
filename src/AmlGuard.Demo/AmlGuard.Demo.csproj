@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>AmlGuard.Demo</RootNamespace>
+    <AssemblyName>AmlGuard.Demo</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The demo runs the real plug-in classes against an in-memory Dataverse. -->
+    <PackageReference Include="DataverseFakes.Community" Version="1.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AmlGuard.Plugins\AmlGuard.Plugins.csproj" />
+  </ItemGroup>
+
+</Project>
