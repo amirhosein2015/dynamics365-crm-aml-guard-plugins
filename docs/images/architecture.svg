@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 790" width="1200" height="790" role="img" aria-labelledby="t d">
+<title id="t">AML Guard architecture</title>
+<desc id="d">A Dataverse event triggers a thin plug-in, which calls a handler. The handler reads data through one repository and asks plain C# domain classes to decide. The result is an alert and, for sanctions, a review flag on the contact.</desc>
+<defs>
+<marker id="he-g" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#64748b"/></marker><marker id="hs-g" viewBox="0 0 10 10" refX="1.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#64748b"/></marker><marker id="he-t" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#5eead4"/></marker><marker id="hs-t" viewBox="0 0 10 10" refX="1.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#5eead4"/></marker><marker id="he-o" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#fdba74"/></marker><marker id="hs-o" viewBox="0 0 10 10" refX="1.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#fdba74"/></marker>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1020"/><stop offset="1" stop-color="#0e1526"/></linearGradient>
+</defs>
+<style>
+  .caption{font:600 14px 'Segoe UI','Helvetica Neue',Arial,sans-serif;fill:#94a3b8}
+  .tag{font:700 10.5px 'Segoe UI','Helvetica Neue',Arial,sans-serif;letter-spacing:.9px}
+  .title{font:700 16px 'Segoe UI','Helvetica Neue',Arial,sans-serif;fill:#f1f5f9}
+  .sub{font:400 12.5px 'Segoe UI','Helvetica Neue',Arial,sans-serif;fill:#9aa6c2}
+  .note{font:400 11.5px 'Segoe UI','Helvetica Neue',Arial,sans-serif;fill:#94a3b8}
+  .chip{font:700 13px 'Segoe UI','Helvetica Neue',Arial,sans-serif;fill:#f1f5f9}
+  .chipsub{font:400 11.5px 'Segoe UI','Helvetica Neue',Arial,sans-serif;fill:#9aa6c2}
+</style>
+<rect width="1200" height="790" rx="16" fill="url(#bg)"/>
+<text x="60" y="34" class="caption">How a save in Dynamics 365 becomes an AML alert</text>
+<rect x="60" y="56" width="500" height="84" rx="12" fill="#111827" stroke="#2b3550" stroke-width="1.2"/>
+<rect x="60" y="70" width="4" height="56" rx="2" fill="#f5c451"/>
+<text x="80" y="78" class="tag" fill="#f5c451">1 · DATAVERSE EVENT</text>
+<text x="80" y="100" class="title">Create aml_transaction</text>
+<text x="80" y="120" class="sub">PostOperation, synchronous. Only deposits are checked.</text>
+<rect x="640" y="56" width="500" height="84" rx="12" fill="#111827" stroke="#2b3550" stroke-width="1.2"/>
+<rect x="640" y="70" width="4" height="56" rx="2" fill="#f5c451"/>
+<text x="660" y="78" class="tag" fill="#f5c451">1 · DATAVERSE EVENT</text>
+<text x="660" y="100" class="title">Create and Update contact</text>
+<text x="660" y="120" class="sub">PostOperation, synchronous. Update filters: firstname, lastname.</text>
+<rect x="60" y="170" width="500" height="84" rx="12" fill="#111827" stroke="#2b3550" stroke-width="1.2"/>
+<rect x="60" y="184" width="4" height="56" rx="2" fill="#7dd3fc"/>
+<text x="80" y="192" class="tag" fill="#7dd3fc">2 · PLUG-IN (THIN)</text>
+<text x="80" y="214" class="title">SplitDepositPlugin</text>
+<text x="80" y="234" class="sub">Unpacks the context. Runs its queries as the SYSTEM user.</text>
+<rect x="640" y="170" width="500" height="84" rx="12" fill="#111827" stroke="#2b3550" stroke-width="1.2"/>
+<rect x="640" y="184" width="4" height="56" rx="2" fill="#7dd3fc"/>
+<text x="660" y="192" class="tag" fill="#7dd3fc">2 · PLUG-IN (THIN)</text>
+<text x="660" y="214" class="title">SanctionsCheckPlugin</text>
+<text x="660" y="234" class="sub">Depth guard and name-column check. Never throws on a match.</text>
+<rect x="60" y="284" width="500" height="84" rx="12" fill="#111827" stroke="#2b3550" stroke-width="1.2"/>
+<rect x="60" y="298" width="4" height="56" rx="2" fill="#c4b5fd"/>
+<text x="80" y="306" class="tag" fill="#c4b5fd">3 · HANDLER</text>
+<text x="80" y="328" class="title">SplitDepositHandler</text>
+<text x="80" y="348" class="sub">Loads settings, deposits and the last alert; creates the alert.</text>
+<rect x="640" y="284" width="500" height="84" rx="12" fill="#111827" stroke="#2b3550" stroke-width="1.2"/>
+<rect x="640" y="298" width="4" height="56" rx="2" fill="#c4b5fd"/>
+<text x="660" y="306" class="tag" fill="#c4b5fd">3 · HANDLER</text>
+<text x="660" y="328" class="title">SanctionsHandler</text>
+<text x="660" y="348" class="sub">Loads contact and list; flags the contact; creates the alert.</text>
+<line x1="310" y1="140" x2="310" y2="168" stroke="#64748b" stroke-width="1.8" marker-end="url(#he-g)"/>
+<line x1="310" y1="254" x2="310" y2="282" stroke="#64748b" stroke-width="1.8" marker-end="url(#he-g)"/>
+<line x1="890" y1="140" x2="890" y2="168" stroke="#64748b" stroke-width="1.8" marker-end="url(#he-g)"/>
+<line x1="890" y1="254" x2="890" y2="282" stroke="#64748b" stroke-width="1.8" marker-end="url(#he-g)"/>
+<rect x="60" y="408" width="1080" height="128" rx="14" fill="#0c1b1f" stroke="#2dd4bf" stroke-width="1.4" stroke-dasharray="7 5"/>
+<text x="80" y="430" class="tag" fill="#5eead4">4 · DOMAIN: PLAIN C# CLASSES, NO DATAVERSE SDK REFERENCE, UNIT TESTED WITHOUT ANY ENVIRONMENT</text>
+<rect x="80" y="444" width="235" height="78" rx="10" fill="#0a1417" stroke="#14b8a6" stroke-width="1.2"/>
+<text x="94" y="471" class="title">SplitDepositEvaluator</text>
+<text x="94" y="491" class="sub">window, threshold, count, sum</text>
+<text x="94" y="507" class="sub">duplicate-alert check</text>
+<rect x="325" y="444" width="235" height="78" rx="10" fill="#0a1417" stroke="#14b8a6" stroke-width="1.2"/>
+<text x="339" y="471" class="title">DepositRules</text>
+<text x="339" y="491" class="sub">validated settings,</text>
+<text x="339" y="507" class="sub">defaults when missing</text>
+<rect x="655" y="444" width="235" height="78" rx="10" fill="#0a1417" stroke="#14b8a6" stroke-width="1.2"/>
+<text x="669" y="471" class="title">NameNormalizer</text>
+<text x="669" y="491" class="sub">trim, spaces, case,</text>
+<text x="669" y="507" class="sub">diacritics</text>
+<rect x="900" y="444" width="235" height="78" rx="10" fill="#0a1417" stroke="#14b8a6" stroke-width="1.2"/>
+<text x="914" y="471" class="title">SanctionsMatcher</text>
+<text x="914" y="491" class="sub">exact match only,</text>
+<text x="914" y="507" class="sub">no fuzzy matching</text>
+<line x1="310" y1="368" x2="310" y2="406" stroke="#5eead4" stroke-width="1.8" marker-end="url(#he-t)"/>
+<line x1="890" y1="368" x2="890" y2="406" stroke="#5eead4" stroke-width="1.8" marker-end="url(#he-t)"/>
+<text x="320" y="392" class="note">applies the rule</text>
+<text x="900" y="392" class="note">applies the rule</text>
+<rect x="60" y="574" width="1080" height="64" rx="12" fill="#111827" stroke="#2b3550" stroke-width="1.2"/>
+<rect x="60" y="588" width="4" height="36" rx="2" fill="#fdba74"/>
+<text x="80" y="596" class="tag" fill="#fdba74">5 · DATA ACCESS</text>
+<text x="80" y="618" class="title">AmlRepository</text>
+<text x="260" y="618" class="sub">every Dataverse read and write goes through this one class (QueryExpression)</text>
+<path d="M60 326 H30 V606 H58" fill="none" stroke="#fdba74" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#he-o)"/>
+<path d="M1140 326 H1170 V606 H1142" fill="none" stroke="#fdba74" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#he-o)"/>
+<text transform="translate(20,466) rotate(-90)" text-anchor="middle" class="note">reads settings and deposits, saves the alert</text>
+<text transform="translate(1182,466) rotate(-90)" text-anchor="middle" class="note">reads contact and list, flags contact, saves the alert</text>
+<line x1="600" y1="638" x2="600" y2="668" stroke="#fdba74" stroke-width="1.8" marker-end="url(#he-o)" marker-start="url(#hs-o)"/>
+<rect x="60" y="670" width="1080" height="100" rx="14" fill="#111827" stroke="#2b3550" stroke-width="1.2"/>
+<text x="80" y="694" class="tag" fill="#94a3b8">6 · DATAVERSE TABLES (PUBLISHER PREFIX aml, FICTIONAL DATA)</text>
+<rect x="94" y="708" width="196" height="46" rx="9" fill="#0f172a" stroke="#475569" stroke-width="1.3"/>
+<text x="106" y="727" class="chip">aml_settings</text>
+<text x="106" y="744" class="chipsub">threshold, count, window</text>
+<rect x="298" y="708" width="196" height="46" rx="9" fill="#0f172a" stroke="#475569" stroke-width="1.3"/>
+<text x="310" y="727" class="chip">aml_transaction</text>
+<text x="310" y="744" class="chipsub">deposits and withdrawals</text>
+<rect x="502" y="708" width="196" height="46" rx="9" fill="#0f172a" stroke="#475569" stroke-width="1.3"/>
+<text x="514" y="727" class="chip">aml_sanctionedname</text>
+<text x="514" y="744" class="chipsub">fictional sanctions list</text>
+<rect x="706" y="708" width="196" height="46" rx="9" fill="#2a1519" stroke="#fca5a5" stroke-width="1.3"/>
+<text x="718" y="727" class="chip">aml_alert</text>
+<text x="718" y="744" class="chipsub">OUTPUT: High / Critical</text>
+<rect x="910" y="708" width="196" height="46" rx="9" fill="#2a1f12" stroke="#fdba74" stroke-width="1.3"/>
+<text x="922" y="727" class="chip">contact</text>
+<text x="922" y="744" class="chipsub">OUTPUT: aml_reviewstatus</text>
+</svg>
