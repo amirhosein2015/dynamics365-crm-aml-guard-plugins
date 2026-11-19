@@ -8,7 +8,7 @@
 
 Two synchronous Dataverse plug-ins for a fictional bank CRM: one detects **split deposits (structuring)**, the other screens contacts against a **sanctions list**. The business rules are plain C# classes with no Dataverse SDK reference, so they are unit tested without any Dynamics environment.
 
-> **Educational project with fictional data.** Not a real compliance product; never use it for real AML decisions.
+> **A showcase project, and everything in it is hypothetical.** The bank, the customers, the amounts and the sanctions list are all made up. The goal is to show how these two controls can be designed and built cleanly on Dynamics 365.
 
 <p align="center">
   <img src="docs/images/architecture.svg" alt="Architecture: a Dataverse event triggers a thin plug-in, which calls a handler. The handler reads data through one repository and asks plain C# domain classes to decide. The result is an alert and, for sanctions, a review flag on the contact." width="100%">
@@ -27,6 +27,52 @@ The demo runs the real plug-in classes against an in-memory Dataverse: three sma
 </p>
 
 <sub>Console output of `dotnet run --project src\AmlGuard.Demo`, rendered as images from the captured text in [`docs/demo-output.txt`](docs/demo-output.txt). Lines without a prefix are `ITracingService` trace output, the kind of lines you would read in the Plugin Trace Log.</sub>
+
+## Why it matters
+
+Two everyday compliance problems, and what each plug-in does about them.
+
+### Split-deposit detection
+
+**The real-world problem.** Many countries require a bank to report large cash deposits above a fixed amount (10,000 in the US, for example). People who want to avoid that report sometimes split the money into several smaller deposits. This is called *structuring* or *smurfing*. A rule that only looks at one transaction at a time never sees it, because every single deposit looks harmless.
+
+**What the plug-in does.** It looks at the customer's recent history each time a deposit is saved, adds up the deposits inside a rolling time window and raises one alert when the pattern appears. It reacts while the deposit is being saved, not in a report the next morning.
+
+<p align="center">
+  <img src="docs/images/structuring-explained.svg" alt="Three deposits of 4,000, 3,500 and 3,200 are each below the 10,000 reporting threshold, but their total of 10,700 within 24 hours reaches it and raises a High alert." width="100%">
+</p>
+
+What makes it useful in practice:
+
+- **Configurable.** Threshold, minimum number of deposits and window length live in a settings table, so a compliance officer can tune them without a deployment.
+- **Explainable.** The alert text states how many deposits, what total and which window, so an analyst can understand it without opening the code.
+- **No alert spam.** One pattern gives one alert per customer and window, not one per deposit.
+
+### Sanctions screening
+
+**The real-world problem.** Banks must not do business with people and companies on official sanctions lists (OFAC, UN, EU and others). The same person is often typed in different ways: capital letters, extra spaces, missing accents. A plain "equals" comparison misses these, and a missed match is a serious compliance failure.
+
+**What the plug-in does.** It screens a contact when it is created and again whenever the name changes. Both the typed name and every list entry go through the same normalization, so spelling noise no longer hides a match. On a match the contact is set to **Under Review** and a **Critical** alert is created.
+
+<p align="center">
+  <img src="docs/images/name-normalization.svg" alt="The name ' JOSE martinez ' is trimmed, collapsed to single spaces, lower-cased and stripped of accents, then equals the list entry Jose Martinez. The name 'Jose Martines' differs by one letter and is not matched." width="100%">
+</p>
+
+What makes it useful in practice:
+
+- **Catches the cases people really make.** Case, spacing and accents are handled; renaming an existing contact is screened too, not only new ones.
+- **Keeps the evidence.** The plug-in does not throw an error on a match. An error would roll back the save together with the alert, so nothing would document the hit. Instead the record is saved, flagged, and a person decides.
+- **Predictable and auditable.** Exact matching after normalization gives the same answer every time and is easy to explain to an auditor. Fuzzy matching is a possible next step, kept separate on purpose because it brings false positives that need their own tuning.
+- **Safe to run inside Dataverse.** Because the plug-in updates the contact itself, it is protected against infinite loops three times over (filtering attributes, a name-column check and a depth guard).
+
+### What makes the project solid
+
+- Business rules are plain C# with no SDK dependency, and a test fails if that ever changes.
+- 127 automated tests run on every push with GitHub Actions.
+- Every design choice has a written reason and trade-off in [`docs/decisions.md`](docs/decisions.md).
+- The limits are stated openly in [Status and limitations](#status-and-limitations).
+
+A production version would add a maintained sanctions feed, threshold tuning with real data and audit reporting. This project shows the core of the idea.
 
 ## What it does
 
